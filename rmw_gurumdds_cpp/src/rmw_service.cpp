@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #include <chrono>
-#include <rosidl_runtime_c/service_type_support_struct.h>
 #include <string>
 #include <thread>
 #include <utility>
@@ -35,7 +34,6 @@
 #include "rmw_gurumdds_cpp/types.hpp"
 
 #include "./type_support_service.hpp"
-#include "type_support_common.hpp"
 
 extern "C"
 {
@@ -104,7 +102,6 @@ rmw_create_service(
   dds_ReadCondition * read_condition = nullptr;
   dds_TypeSupport * request_typesupport = nullptr;
   dds_TypeSupport * response_typesupport = nullptr;
-  dds_TypeSupport_ops dds_ops = dds_TypeSupport_ops();
 
   dds_TopicDescription * topic_desc = nullptr;
   dds_Topic * request_topic = nullptr;
@@ -121,6 +118,18 @@ rmw_create_service(
   std::string response_type_name;
   std::string request_metastring;
   std::string response_metastring;
+
+  // Service and client does not yet support zero copy
+  dds_DataSharingQosPolicy datasharing;
+  datasharing.kind = dds_DISABLE_DATASHARING;
+  datasharing.max_samples = 0;
+  datasharing.max_size_per_sample = 0;
+
+  dds_StringProperty props[2];
+  props[0].key = const_cast<char*>("dcps.datawriter.data_sharing_qos");
+  props[0].value = &datasharing;
+  props[1].key = NULL;
+  props[1].value = NULL;
 
   // Create topic and type name strings
   service_type_name =
@@ -171,15 +180,6 @@ rmw_create_service(
     goto fail;
   }
 
-  dds_ops.context = const_cast<rosidl_service_type_support_t *>(type_support);
-  dds_ops.get_size = NULL;
-  dds_ops.get_serialized_size = gurumdds_ts_get_serialized_size<rosidl_service_type_support_t>;
-  dds_ops.serialize = NULL;
-  dds_ops.serialize_direct = gurumdds_ts_serialize_direct<rosidl_service_type_support_t>;
-  dds_ops.deserialize = NULL;
-  dds_ops.deserialize_direct = gurumdds_ts_deserialize_direct<rosidl_service_type_support_t>;
-  dds_TypeSupport_set_operations(request_typesupport, &dds_ops);
-
   ret =
     dds_TypeSupport_register_type(request_typesupport, participant, request_type_name.c_str());
   if (ret != dds_RETCODE_OK) {
@@ -192,15 +192,6 @@ rmw_create_service(
     RMW_SET_ERROR_MSG("failed to create typesupport");
     goto fail;
   }
-
-  dds_ops.context = const_cast<rosidl_service_type_support_t *>(type_support);
-  dds_ops.get_size = NULL;
-  dds_ops.get_serialized_size = gurumdds_ts_get_serialized_size<rosidl_service_type_support_t>;
-  dds_ops.serialize = NULL;
-  dds_ops.serialize_direct = gurumdds_ts_serialize_direct<rosidl_service_type_support_t>;
-  dds_ops.deserialize = NULL;
-  dds_ops.deserialize_direct = gurumdds_ts_deserialize_direct<rosidl_service_type_support_t>;
-  dds_TypeSupport_set_operations(response_typesupport, &dds_ops);
 
   ret =
     dds_TypeSupport_register_type(response_typesupport, participant, response_type_name.c_str());
@@ -359,8 +350,8 @@ rmw_create_service(
     goto fail;
   }
 
-  response_writer = dds_Publisher_create_datawriter(
-    dds_publisher, response_topic, &datawriter_qos, nullptr, 0);
+  response_writer = dds_Publisher_create_datawriter_w_props(
+    dds_publisher, response_topic, &datawriter_qos, nullptr, 0, props);
   if (response_writer == nullptr) {
     RMW_SET_ERROR_MSG("failed to create datawriter");
     dds_DataWriterQos_finalize(&datawriter_qos);

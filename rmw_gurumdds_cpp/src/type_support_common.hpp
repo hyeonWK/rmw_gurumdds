@@ -305,6 +305,22 @@ allocate_message(
   return nullptr;
 }
 
+
+inline size_t gurumdds_ts_get_size(void* context) {
+  const rosidl_message_type_support_t * rosidl_typesupport =
+    reinterpret_cast<rosidl_message_type_support_t *>(context);
+
+  if (rosidl_typesupport->typesupport_identifier == rosidl_typesupport_introspection_c__identifier) {
+    auto members = static_cast<const rosidl_typesupport_introspection_c__MessageMembers *>(rosidl_typesupport->data);
+    return members->size_of_;
+  } else if (rosidl_typesupport->typesupport_identifier == rosidl_typesupport_introspection_cpp::typesupport_identifier) {
+    auto members = static_cast<const rosidl_typesupport_introspection_cpp::MessageMembers *>(rosidl_typesupport->data);
+    return members->size_of_;
+  }
+
+  return 0;
+}
+
 template<typename MessageMembersT>
 ssize_t
 _get_serialized_size(
@@ -352,10 +368,9 @@ get_serialized_size(
   return -1;
 }
 
-template<typename ROSTypeSupportT>
 inline size_t gurumdds_ts_get_serialized_size(void* context, void* data) {
-  const ROSTypeSupportT * rosidl_typesupport =
-    reinterpret_cast<ROSTypeSupportT *>(context);
+  const rosidl_message_type_support_t * rosidl_typesupport =
+    reinterpret_cast<rosidl_message_type_support_t *>(context);
 
   return get_serialized_size(rosidl_typesupport->data, rosidl_typesupport->typesupport_identifier, data);
 }
@@ -415,10 +430,9 @@ serialize_ros_to_cdr(
   return false;
 }
 
-template<typename ROSTypeSupportT>
 inline size_t gurumdds_ts_serialize_direct(void* context, void* data, void* buffer, size_t buffer_size) {
-  const ROSTypeSupportT * rosidl_typesupport =
-    reinterpret_cast<ROSTypeSupportT *>(context);
+  const rosidl_message_type_support_t * rosidl_typesupport =
+    reinterpret_cast<rosidl_message_type_support_t *>(context);
 
   serialize_ros_to_cdr(
       rosidl_typesupport->data,
@@ -485,10 +499,9 @@ deserialize_cdr_to_ros(
   return false;
 }
 
-template<typename ROSTypeSupportT>
 inline bool gurumdds_ts_deserialize_direct(void* context, void* buffer, size_t buffer_size, void* data) {
-  const ROSTypeSupportT * rosidl_typesupport =
-    reinterpret_cast<ROSTypeSupportT *>(context);
+  const rosidl_message_type_support_t * rosidl_typesupport =
+    reinterpret_cast<rosidl_message_type_support_t  *>(context);
 
   return deserialize_cdr_to_ros(
       rosidl_typesupport->data,

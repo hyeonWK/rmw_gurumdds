@@ -169,12 +169,12 @@ rmw_create_publisher(
   }
 
   dds_ops.context = const_cast<rosidl_message_type_support_t *>(type_support);
-  dds_ops.get_size = NULL;
-  dds_ops.get_serialized_size = gurumdds_ts_get_serialized_size<rosidl_message_type_support_t>;
+  dds_ops.get_size = gurumdds_ts_get_size;
+  dds_ops.get_serialized_size = gurumdds_ts_get_serialized_size;
   dds_ops.serialize = NULL;
-  dds_ops.serialize_direct = gurumdds_ts_serialize_direct<rosidl_message_type_support_t>;
+  dds_ops.serialize_direct = gurumdds_ts_serialize_direct;
   dds_ops.deserialize = NULL;
-  dds_ops.deserialize_direct = gurumdds_ts_deserialize_direct<rosidl_message_type_support_t>;
+  dds_ops.deserialize_direct = gurumdds_ts_deserialize_direct;
   dds_TypeSupport_set_operations(dds_typesupport, &dds_ops);
 
   ret = dds_TypeSupport_register_type(dds_typesupport, participant, type_name.c_str());
